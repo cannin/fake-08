@@ -107,6 +107,25 @@ jobs:
           path: |
             platform/wiiu/*.rpx
 
+  wii-standalone:
+    name: Wii
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules : recursive
+
+      - name: Build
+        run: |
+          docker run -e ENABLE_COMPATIBILITY_REPORTING -v $GITHUB_WORKSPACE:/build_dir devkitpro/devkitppc /bin/bash -ex /build_dir/.github/workflows/buildWii.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Nintendo Wii
+          path: |
+            platform/wii/*.dol
+
   vita-standalone:
     name: Vita
     runs-on: ubuntu-latest
