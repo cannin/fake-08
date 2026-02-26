@@ -39,22 +39,29 @@ string _wiiCustomBiosLua = "cartpath = \"sd:/p8carts/\"\n"
 
 Host::Host(int windowWidth, int windowHeight) 
 {
-    fatInitDefault();
-
-    struct stat st = {0};
-
-    // Try SD first, fallback to USB
-    if (chdir("sd:/") != 0) {
-        chdir("usb:/");
-    }
-
-    if (stat(_wiiSettingsDir.c_str(), &st) == -1) {
-        mkdir(_wiiSettingsDir.c_str(), 0777);
-    }
+    VIDEO_Init();
+    WPAD_Init();
     
-    string cartdatadir = _wiiSettingsPrefix + "cdata";
-    if (stat(cartdatadir.c_str(), &st) == -1) {
-        mkdir(cartdatadir.c_str(), 0777);
+    bool fatStarted = fatInitDefault();
+
+    if (fatStarted) {
+        struct stat st = {0};
+
+        // Try SD first, fallback to USB
+        if (chdir("sd:/") != 0) {
+            chdir("usb:/");
+        }
+
+        if (stat(_wiiSettingsDir.c_str(), &st) == -1) {
+            mkdir(_wiiSettingsDir.c_str(), 0777);
+        }
+        
+        string cartdatadir = _wiiSettingsPrefix + "cdata";
+        if (stat(cartdatadir.c_str(), &st) == -1) {
+            mkdir(cartdatadir.c_str(), 0777);
+        }
+    } else {
+        printf("FAT initialization failed! Filesystem will not be available.\n");
     }
 	
     setPlatformParams(
