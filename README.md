@@ -38,6 +38,44 @@ Once you have the appropriate toolchain(s) installed, call `make` followed by th
 
 Building tested on windows using devkitpro's msys2 and Ubuntu (WSL and standalone). Should work on other plaforms as well.
 
+### macOS SDL2 desktop build
+
+The repo can also be built on macOS as an SDL2 desktop executable.
+
+1. Initialize submodules:
+
+`git submodule update --init --recursive`
+
+2. Install SDL2, for example with Homebrew:
+
+`brew install sdl2`
+
+3. Build the desktop target:
+
+`make sdl2`
+
+This produces the executable at `platform/SDL2Desktop/FAKE08`
+
+Run a cart directly:
+
+`./platform/SDL2Desktop/FAKE08 carts/ld45.p8`
+
+Or launch the built-in menu and browse carts from `~/p8carts/`:
+
+`mkdir -p ~/p8carts`
+
+`./platform/SDL2Desktop/FAKE08`
+
+Optional window size flags are supported:
+
+`./platform/SDL2Desktop/FAKE08 -w 1280 -h 800 carts/ld45.p8`
+
+Run the test suite with:
+
+`make tests`
+
+The macOS build files also account for repositories located in paths with spaces and for environments where third-party headers in `/usr/local/include` would otherwise interfere with Apple SDK headers.
+
 Building for bittboy requires builing your own toolchain first (and will probably only work on unix.). The toolchain is available at https://github.com/bittboy/buildroot/. Clone and build that repo, then recursively copy the contents of `output/host/` to `/opt/bittboy-toolchain/`. You should then be able to use the `make bittboy` command.
 
 Building for Miyoo mini uses shauninman's Union Miyoo Mini toolchain: https://github.com/shauninman/union-miyoomini-toolchain

@@ -25,6 +25,17 @@ CFLAGS	+=	$(INCLUDE) -DVER_STR=\"$(APP_VERSION)\"
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions 
 #-std=gnu++11 was used before... not sure of difference
 
+UNAME_S := $(shell uname -s)
+
+# Work around local macOS header shadowing by forcing the SDK header order.
+ifeq ($(UNAME_S),Darwin)
+SDKROOT := $(shell xcrun --show-sdk-path 2>/dev/null)
+CLANG_RESOURCE_DIR := $(shell $(CXX) -print-resource-dir 2>/dev/null)
+MACOS_SYSTEM_CXXFLAGS := -nostdinc -nostdinc++ -isystem $(SDKROOT)/usr/include/c++/v1 -isystem $(CLANG_RESOURCE_DIR)/include -isystem $(SDKROOT)/usr/include
+CFLAGS += $(MACOS_SYSTEM_CXXFLAGS)
+CXXFLAGS += $(MACOS_SYSTEM_CXXFLAGS)
+endif
+
 # SDL2 flags via pkg-config or sdl2-config with sensible fallbacks (Homebrew paths)
 SDL2_CFLAGS := $(shell pkg-config --cflags sdl2 2>/dev/null)
 SDL2_LIBS   := $(shell pkg-config --libs sdl2 2>/dev/null)
@@ -35,7 +46,6 @@ SDL2_LIBS   := $(shell sdl2-config --libs 2>/dev/null)
 endif
 
 ifeq ($(strip $(SDL2_CFLAGS)),)
-UNAME_S := $(shell uname -s)
 UNAME_M := $(shell uname -m)
 ifeq ($(UNAME_S),Darwin)
 ifeq ($(UNAME_M),arm64)
@@ -63,16 +73,16 @@ LDFLAGS	:= $(LIBS) $(SDL2_LIBS)
 # no real need to edit anything past this point unless you need to add additional
 # rules for different file extensions
 #---------------------------------------------------------------------------------
-ifneq ($(BUILD),$(notdir $(CURDIR)))
+ifneq ($(SUBMAKE_BUILD),1)
 #---------------------------------------------------------------------------------
 
-export OUTPUT	:=	$(CURDIR)/$(TARGET)
-export TOPDIR	:=	$(CURDIR)
+export OUTPUT	:=	../$(TARGET)
+export TOPDIR	:=	..
 
-export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
-			$(foreach dir,$(DATA),$(CURDIR)/$(dir))
+export VPATH	:=	$(foreach dir,$(SOURCES),../$(dir)) \
+			$(foreach dir,$(DATA),../$(dir))
 
-export DEPSDIR	:=	$(CURDIR)/$(BUILD)
+export DEPSDIR	:=	.
 
 CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
@@ -96,9 +106,9 @@ export OFILES_SRC	:=	$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
 export OFILES 		:=	$(OFILES_BIN) $(OFILES_SRC)
 export HFILES_BIN	:=	$(addsuffix .h,$(subst .,_,$(BINFILES)))
 
-export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
+export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I../$(dir)) \
 			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-			-I$(CURDIR)/$(BUILD)
+			-I.
 
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
@@ -110,7 +120,7 @@ all: $(BUILD)
 
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
-	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@$(MAKE) --no-print-directory -C $(BUILD) -f ../Makefile SUBMAKE_BUILD=1
 
 #---------------------------------------------------------------------------------
 clean:
